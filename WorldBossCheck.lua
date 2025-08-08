@@ -218,3 +218,6 @@ local ldbIcon = ldb:NewDataObject("WorldBossCheck", {
 
 WorldBossCheckDB = WorldBossCheckDB or {}
 dbicon:Register("WorldBossCheck", ldbIcon, WorldBossCheckDB)
+
+
+ --Test Upload From Visual Studio Code
