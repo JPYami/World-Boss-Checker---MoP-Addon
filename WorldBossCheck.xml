@@ -1,0 +1,7 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <!-- No Frame here, only XML remains to handle the backdrop styling, if needed -->
+    <!-- The frame is fully handled in Lua now -->
+
+</Ui>
+
