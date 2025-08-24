@@ -195,8 +195,12 @@ frame:RegisterEvent("QUEST_LOG_UPDATE")
 frame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
         local level = UnitLevel("player")
-        if level < 85 then
+        local shaKilled = C_QuestLog.IsQuestFlaggedCompleted(32099)
+        local galleonKilled = C_QuestLog.IsQuestFlaggedCompleted(32098)
+        if level < 85 or (shaKilled and galleonKilled) then
             frame:Hide()
+        else
+            frame:Show()
         end
         WorldBossCheck_Update()
         UpdateResetTimer()
