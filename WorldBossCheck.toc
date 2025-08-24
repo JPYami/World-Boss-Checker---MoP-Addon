@@ -1,7 +1,7 @@
 ## Interface: 50500
 ## Title: World Boss Check
 ## Notes: Check kill status of weekly world bosses
-## Version: 1.0
+## Version: 0.2
 ## Author: CrucifiedEmo
 ## SavedVariables: WorldBossCheckDB
 ## OptionalDeps: LibDataBroker-1.1, LibDBIcon-1.0
