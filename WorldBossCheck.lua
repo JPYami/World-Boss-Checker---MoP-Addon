@@ -58,7 +58,7 @@ refreshButton:SetScript("OnClick", function() WorldBossCheck_Update() end)
 -- Footer
 local footerText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 footerText:SetPoint("BOTTOMRIGHT", -10, 10)
-footerText:SetText("Version 0.1")
+footerText:SetText("Version 0.2")
 
 -- Resize frame based on character count
 local function ResizeFrameToFitCharacters(count)
@@ -78,7 +78,7 @@ local function UpdateAltStatusDisplay()
 
     local lines = {}
     for charName, data in pairs(WorldBossCheckDB.characters) do
-        if charName ~= currentChar then
+        if charName ~= currentChar and (data.level or 0) >= 85 then
             local icon
             if data.kills == 2 then
                 icon = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16|t"
@@ -106,7 +106,6 @@ local function UpdateAltStatusDisplay()
     refreshButton:SetPoint("TOPLEFT", resetText, "BOTTOMLEFT", 0, -5)
 end
 
-
 -- Update boss kill statuses
 function WorldBossCheck_Update()
     local checkIcon = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16|t"
@@ -116,44 +115,50 @@ function WorldBossCheck_Update()
     WorldBossCheckDB = WorldBossCheckDB or {}
     WorldBossCheckDB.characters = WorldBossCheckDB.characters or {}
 
-    -- ⏱ Reset outdated character data (before saving current info)
+    -- Reset outdated character data
     local now = time()
     local nextReset = C_DateAndTime.GetSecondsUntilWeeklyReset()
-    local thisResetTimestamp = now + nextReset - 604800  -- current reset = next reset - 7 days
+    local thisResetTimestamp = now + nextReset - 604800
 
     for charName, data in pairs(WorldBossCheckDB.characters) do
         if data.lastUpdate and data.lastUpdate < thisResetTimestamp then
-            -- Reset kills from previous week
             WorldBossCheckDB.characters[charName].kills = 0
             WorldBossCheckDB.characters[charName].lastUpdate = nil
         end
     end
 
-    -- 🧾 Get current character info
+    -- Current character info
     local name, realm = UnitName("player")
+    local level = UnitLevel("player")
     realm = realm or GetRealmName()
     local fullName = name .. "-" .. realm
 
-    -- 🔍 Check boss kills
+    -- Ignore and cleanup lowbies
+    if level < 85 then
+        WorldBossCheckDB.characters[fullName] = nil
+        UpdateAltStatusDisplay()
+        return
+    end
+
+    -- Boss kills
     local shaKilled = C_QuestLog.IsQuestFlaggedCompleted(32099)
     local galleonKilled = C_QuestLog.IsQuestFlaggedCompleted(32098)
 
-    -- 🖼 Update UI
+    -- Update UI
     shaOfAngerText:SetText("Sha of Anger: " .. (shaKilled and checkIcon or crossIcon))
     galleonText:SetText("Galleon: " .. (galleonKilled and checkIcon or crossIcon))
 
-    -- 💾 Save current character progress
+    -- Save progress
     WorldBossCheckDB.characters[fullName] = {
         name = name,
         realm = realm,
+        level = level,
         kills = (shaKilled and 1 or 0) + (galleonKilled and 1 or 0),
         lastUpdate = now,
     }
 
-    -- 🔄 Refresh alt list
     UpdateAltStatusDisplay()
 end
-
 
 -- Update reset timer
 local function UpdateResetTimer()
@@ -164,7 +169,7 @@ local function UpdateResetTimer()
     resetText:SetText(string.format("Next reset: %dd %dh %dm", days, hours, minutes))
 end
 
--- Update timer every second
+-- Timer updater
 local elapsed = 0
 frame:SetScript("OnUpdate", function(self, delta)
     elapsed = elapsed + delta
@@ -174,15 +179,17 @@ frame:SetScript("OnUpdate", function(self, delta)
     end
 end)
 
+-- Weekly refresh scheduler
 local function ScheduleWeeklyRefresh()
     local secondsUntilReset = C_DateAndTime.GetSecondsUntilWeeklyReset()
     C_Timer.After(secondsUntilReset + 1, function()
         print("WorldBossCheck: Weekly reset occurred! Refreshing boss data.")
         WorldBossCheck_Update()
-        ScheduleWeeklyRefresh() -- Keep it going weekly
+        ScheduleWeeklyRefresh()
     end)
 end
--- Auto update on login and quest log change
+
+-- Auto update events
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("QUEST_LOG_UPDATE")
 frame:SetScript("OnEvent", function(self, event, ...)
@@ -218,6 +225,3 @@ local ldbIcon = ldb:NewDataObject("WorldBossCheck", {
 
 WorldBossCheckDB = WorldBossCheckDB or {}
 dbicon:Register("WorldBossCheck", ldbIcon, WorldBossCheckDB)
-
-
- --Test Upload From Visual Studio Code
