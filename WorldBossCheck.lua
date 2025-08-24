@@ -194,6 +194,10 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("QUEST_LOG_UPDATE")
 frame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
+        local level = UnitLevel("player")
+        if level < 85 then
+            frame:Hide()
+        end
         WorldBossCheck_Update()
         UpdateResetTimer()
         ScheduleWeeklyRefresh()
@@ -211,14 +215,6 @@ local ldbIcon = ldb:NewDataObject("WorldBossCheck", {
     text = "World Boss Check",
     icon = "Interface\\Icons\\inv_axe_2h_pandaraid_d_01",
     OnClick = function(_, button)
-        local level = UnitLevel("player")
-        if level < 85 then
-            print("WorldBossCheck: This addon is only available for level 85+ characters.")
-            if frame:IsShown() then
-                frame:Hide()
-            end
-            return
-        end
         if frame:IsShown() then
             frame:Hide()
         else
