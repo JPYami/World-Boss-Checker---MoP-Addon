@@ -234,3 +234,4 @@ local ldbIcon = ldb:NewDataObject("WorldBossCheck", {
 WorldBossCheckDB = WorldBossCheckDB or {}
 WorldBossCheckDB.minimap = WorldBossCheckDB.minimap or {}
 dbicon:Register("WorldBossCheck", ldbIcon, WorldBossCheckDB)
+dbicon:Show("WorldBossCheck")
