@@ -133,6 +133,13 @@ function WorldBossCheck_Update()
     realm = realm or GetRealmName()
     local fullName = name .. "-" .. realm
 
+    -- Automatic cleanup: remove any character entries for this account that match the current character's name but have a different realm
+    for charName, data in pairs(WorldBossCheckDB.characters) do
+        if data and data.name == name and data.realm ~= realm then
+            WorldBossCheckDB.characters[charName] = nil
+        end
+    end
+
     -- Ignore and cleanup lowbies
     if level < 85 then
         WorldBossCheckDB.characters[fullName] = nil
