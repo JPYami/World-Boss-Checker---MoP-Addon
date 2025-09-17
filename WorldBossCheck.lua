@@ -60,6 +60,24 @@ local footerText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmal
 footerText:SetPoint("BOTTOMRIGHT", -10, 10)
 footerText:SetText("Version 0.2")
 
+-- Checkbox for auto-open preference
+local autoOpenCheckbox = CreateFrame("CheckButton", "WorldBossCheckAutoOpenCheckbox", frame, "ChatConfigCheckButtonTemplate")
+autoOpenCheckbox:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 10)
+autoOpenCheckbox.Text:SetText("Show on login if bosses incomplete")
+autoOpenCheckbox:SetChecked(true)
+autoOpenCheckbox:SetScript("OnClick", function(self)
+    WorldBossCheckDB.autoOpen = self:GetChecked()
+end)
+
+-- Initialize checkbox state from DB
+local function UpdateAutoOpenCheckbox()
+    if WorldBossCheckDB and WorldBossCheckDB.autoOpen ~= nil then
+        autoOpenCheckbox:SetChecked(WorldBossCheckDB.autoOpen)
+    else
+        autoOpenCheckbox:SetChecked(true)
+    end
+end
+
 -- Resize frame based on character count
 local function ResizeFrameToFitCharacters(count)
     local baseHeight = 130
@@ -201,10 +219,13 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("QUEST_LOG_UPDATE")
 frame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
+        WorldBossCheckDB = WorldBossCheckDB or {}
+        UpdateAutoOpenCheckbox()
         local level = UnitLevel("player")
         local shaKilled = C_QuestLog.IsQuestFlaggedCompleted(32099)
         local galleonKilled = C_QuestLog.IsQuestFlaggedCompleted(32098)
-        if level < 85 or (shaKilled and galleonKilled) then
+        local autoOpen = WorldBossCheckDB.autoOpen
+        if level < 85 or (shaKilled and galleonKilled) or (autoOpen == false) then
             frame:Hide()
         else
             frame:Show()
