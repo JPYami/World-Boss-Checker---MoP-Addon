@@ -58,7 +58,7 @@ footerText:SetText("Version 0.2")
 
 -- Checkbox for auto-open preference
 local autoOpenCheckbox = CreateFrame("CheckButton", "WorldBossCheckAutoOpenCheckbox", frame, "ChatConfigCheckButtonTemplate")
-autoOpenCheckbox:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 10)
+autoOpenCheckbox:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 30)
 autoOpenCheckbox.Text:SetText("Show on login if bosses incomplete")
 autoOpenCheckbox:SetChecked(true)
 autoOpenCheckbox:SetScript("OnClick", function(self)
