@@ -50,10 +50,6 @@ local resetText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall
 resetText:SetText("Next reset: (loading...)")
 
 -- Refresh button
-local refreshButton = CreateFrame("Button", "WorldBossCheckFrameRefreshButton", frame, "UIPanelButtonTemplate")
-refreshButton:SetSize(100, 30)
-refreshButton:SetText("Refresh")
-refreshButton:SetScript("OnClick", function() WorldBossCheck_Update() end)
 
 -- Footer
 local footerText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -115,13 +111,10 @@ local function UpdateAltStatusDisplay()
     altStatusText:SetText(table.concat(lines, "\n"))
     ResizeFrameToFitCharacters(#lines)
 
-    -- Reposition reset text and refresh button
+    -- Reposition reset text
     local offsetY = -(#lines * 14 + 10)
     resetText:ClearAllPoints()
     resetText:SetPoint("TOPLEFT", altsHeader, "BOTTOMLEFT", 0, offsetY)
-
-    refreshButton:ClearAllPoints()
-    refreshButton:SetPoint("TOPLEFT", resetText, "BOTTOMLEFT", 0, -5)
 end
 
 -- Update boss kill statuses
