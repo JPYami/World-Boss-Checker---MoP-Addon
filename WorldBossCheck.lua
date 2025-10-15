@@ -39,11 +39,45 @@ altsHeader:SetPoint("TOPLEFT", galleonText, "BOTTOMLEFT", 0, -15)
 altsHeader:SetText("Characters:")
 
 -- Alt status text
-local altStatusText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-altStatusText:SetPoint("TOPLEFT", altsHeader, "BOTTOMLEFT", 0, -5)
-altStatusText:SetJustifyH("LEFT")
-altStatusText:SetWidth(260)
-altStatusText:SetText("Loading...")
+-- Container for character rows
+local altsContainer = CreateFrame("Frame", nil, frame)
+altsContainer:SetPoint("TOPLEFT", altsHeader, "BOTTOMLEFT", 0, -5)
+altsContainer:SetSize(240, 140)
+
+-- Row pool
+local rowPool = {}
+local activeRows = {}
+
+local function AcquireRow()
+    local row = table.remove(rowPool)
+    if row then return row end
+    row = CreateFrame("Frame", nil, altsContainer)
+    row:SetSize(240, 16)
+
+    row.icon = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    row.icon:SetPoint("LEFT", 0, 0)
+    row.icon:SetWidth(20)
+
+    row.nameText = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    row.nameText:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
+    row.nameText:SetJustifyH("LEFT")
+    row.nameText:SetWidth(180)
+
+    row.deleteBtn = CreateFrame("Button", nil, row, "UIPanelCloseButton")
+    row.deleteBtn:SetSize(16, 16)
+    row.deleteBtn:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+
+    return row
+end
+
+local function ReleaseRow(row)
+    row:Hide()
+    row.icon:SetText("")
+    row.nameText:SetText("")
+    row.deleteBtn:Hide()
+    row.deleteBtn:SetScript("OnClick", nil)
+    table.insert(rowPool, row)
+end
 
 -- Reset text
 local resetText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -84,35 +118,69 @@ local function ResizeFrameToFitCharacters(count)
 end
 
 -- Update alt character list
+local function DeleteCharacter(fullName)
+    if not WorldBossCheckDB or not WorldBossCheckDB.characters then return false end
+    if WorldBossCheckDB.characters[fullName] then
+        WorldBossCheckDB.characters[fullName] = nil
+        return true
+    end
+    return false
+end
+
 local function UpdateAltStatusDisplay()
+    -- Clear active rows
+    for _, row in ipairs(activeRows) do
+        ReleaseRow(row)
+    end
+    wipe(activeRows)
+
     if not WorldBossCheckDB or not WorldBossCheckDB.characters then return end
 
     local name, realm = UnitName("player")
     local currentChar = name .. "-" .. (realm or GetRealmName())
 
-    local lines = {}
+    -- Collect display entries
+    local entries = {}
     for charName, data in pairs(WorldBossCheckDB.characters) do
         if charName ~= currentChar and (data.level or 0) >= 85 then
-            local icon
-            if data.kills == 2 then
-                icon = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16|t"
-            elseif data.kills == 1 then
-                icon = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:16|t"
-            else
-                icon = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:16|t"
-            end
-
-            local status = string.format("%s  %s", icon, data.name)
-            table.insert(lines, status)
+            table.insert(entries, { key = charName, data = data })
         end
     end
 
-    table.sort(lines)
-    altStatusText:SetText(table.concat(lines, "\n"))
-    ResizeFrameToFitCharacters(#lines)
+    table.sort(entries, function(a,b) return a.data.name < b.data.name end)
+
+    -- Create rows
+    for i, entry in ipairs(entries) do
+        local row = AcquireRow()
+        row:SetPoint("TOPLEFT", altsContainer, "TOPLEFT", 0, -(i-1) * 16)
+        local data = entry.data
+        local icon
+        if data.kills == 2 then
+            icon = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16|t"
+        elseif data.kills == 1 then
+            icon = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:16|t"
+        else
+            icon = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:16|t"
+        end
+        row.icon:SetText(icon)
+        row.nameText:SetText(data.name .. " - " .. data.realm)
+        row.deleteBtn:Show()
+        row.deleteBtn:SetScript("OnClick", function()
+            if DeleteCharacter(entry.key) then
+                print("WorldBossCheck: Removed " .. entry.key)
+                UpdateAltStatusDisplay()
+            else
+                print("WorldBossCheck: Could not find " .. entry.key)
+            end
+        end)
+        row:Show()
+        table.insert(activeRows, row)
+    end
+
+    ResizeFrameToFitCharacters(#entries)
 
     -- Reposition reset text
-    local offsetY = -(#lines * 14 + 10)
+    local offsetY = -(#entries * 16 + 10)
     resetText:ClearAllPoints()
     resetText:SetPoint("TOPLEFT", altsHeader, "BOTTOMLEFT", 0, offsetY)
 end
