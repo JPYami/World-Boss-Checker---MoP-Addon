@@ -90,64 +90,7 @@ local function DeleteCharacter(fullName)
     return false
 end
 
--- Confirmation dialog
-local confirmFrame = CreateFrame("Frame", "WorldBossCheckConfirmFrame", UIParent, "BackdropTemplate")
-confirmFrame:SetSize(300, 100)
-confirmFrame:SetPoint("CENTER")
-confirmFrame:SetBackdrop({
-    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile = true, tileSize = 32, edgeSize = 32,
-    insets = { left = 8, right = 8, top = 8, bottom = 8 }
-})
-confirmFrame:Hide()
-
-confirmFrame.title = confirmFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-confirmFrame.title:SetPoint("TOP", 0, -8)
-confirmFrame.title:SetText("Confirm Deletion")
-
-confirmFrame.text = confirmFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-confirmFrame.text:SetPoint("TOP", confirmFrame.title, "BOTTOM", 0, -8)
-confirmFrame.text:SetWidth(260)
-confirmFrame.text:SetJustifyH("CENTER")
-
-local targetToDelete = nil
-
-local yesBtn = CreateFrame("Button", nil, confirmFrame, "UIPanelButtonTemplate")
-yesBtn:SetSize(100, 24)
-yesBtn:SetPoint("BOTTOMLEFT", confirmFrame, "BOTTOM", -110, 12)
-yesBtn:SetText("Yes")
-yesBtn:SetScript("OnClick", function()
-    if targetToDelete then
-        if type(DeleteCharacter) == "function" then
-            if DeleteCharacter(targetToDelete) then
-                print("WorldBossCheck: Removed " .. targetToDelete)
-                UpdateAltStatusDisplay()
-            else
-                print("WorldBossCheck: Could not find " .. targetToDelete)
-            end
-        else
-            print("WorldBossCheck: Delete function not available. Please reload the UI or update the addon files.")
-        end
-    end
-    targetToDelete = nil
-    confirmFrame:Hide()
-end)
-
-local noBtn = CreateFrame("Button", nil, confirmFrame, "UIPanelButtonTemplate")
-noBtn:SetSize(100, 24)
-noBtn:SetPoint("BOTTOMRIGHT", confirmFrame, "BOTTOM", 110, 12)
-noBtn:SetText("No")
-noBtn:SetScript("OnClick", function()
-    targetToDelete = nil
-    confirmFrame:Hide()
-end)
-
-function confirmFrame:ShowForTarget(fullName)
-    targetToDelete = fullName
-    self.text:SetText("Delete saved data for " .. fullName .. "? This action cannot be undone.")
-    self:Show()
-end
+-- (confirmFrame is defined later, after UpdateAltStatusDisplay)
 
 -- Reset text
 local resetText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -240,6 +183,61 @@ local function UpdateAltStatusDisplay()
     local offsetY = -(#entries * 16 + 10)
     resetText:ClearAllPoints()
     resetText:SetPoint("TOPLEFT", altsHeader, "BOTTOMLEFT", 0, offsetY)
+end
+
+-- Confirmation dialog (defined after UpdateAltStatusDisplay so it can call local functions)
+local confirmFrame = CreateFrame("Frame", "WorldBossCheckConfirmFrame", UIParent, "BackdropTemplate")
+confirmFrame:SetSize(300, 100)
+confirmFrame:SetPoint("CENTER")
+confirmFrame:SetBackdrop({
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true, tileSize = 32, edgeSize = 32,
+    insets = { left = 8, right = 8, top = 8, bottom = 8 }
+})
+confirmFrame:Hide()
+
+confirmFrame.title = confirmFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+confirmFrame.title:SetPoint("TOP", 0, -8)
+confirmFrame.title:SetText("Confirm Deletion")
+
+confirmFrame.text = confirmFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+confirmFrame.text:SetPoint("TOP", confirmFrame.title, "BOTTOM", 0, -8)
+confirmFrame.text:SetWidth(260)
+confirmFrame.text:SetJustifyH("CENTER")
+
+local targetToDelete = nil
+
+local yesBtn = CreateFrame("Button", nil, confirmFrame, "UIPanelButtonTemplate")
+yesBtn:SetSize(100, 24)
+yesBtn:SetPoint("BOTTOMLEFT", confirmFrame, "BOTTOM", -110, 12)
+yesBtn:SetText("Yes")
+yesBtn:SetScript("OnClick", function()
+    if targetToDelete then
+        if DeleteCharacter(targetToDelete) then
+            print("WorldBossCheck: Removed " .. targetToDelete)
+            UpdateAltStatusDisplay()
+        else
+            print("WorldBossCheck: Could not find " .. targetToDelete)
+        end
+    end
+    targetToDelete = nil
+    confirmFrame:Hide()
+end)
+
+local noBtn = CreateFrame("Button", nil, confirmFrame, "UIPanelButtonTemplate")
+noBtn:SetSize(100, 24)
+noBtn:SetPoint("BOTTOMRIGHT", confirmFrame, "BOTTOM", 110, 12)
+noBtn:SetText("No")
+noBtn:SetScript("OnClick", function()
+    targetToDelete = nil
+    confirmFrame:Hide()
+end)
+
+function confirmFrame:ShowForTarget(fullName)
+    targetToDelete = fullName
+    self.text:SetText("Delete saved data for " .. fullName .. "? This action cannot be undone.")
+    self:Show()
 end
 
 -- Update boss kill statuses
