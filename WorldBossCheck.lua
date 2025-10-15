@@ -104,7 +104,7 @@ resetText:SetText("Next reset: (loading...)")
 -- Footer
 local footerText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 footerText:SetPoint("BOTTOMRIGHT", -10, 10)
-footerText:SetText("Version 0.3")
+footerText:SetText("Version 0.4")
 
 -- Checkbox for auto-open preference
 local autoOpenCheckbox = CreateFrame("CheckButton", "WorldBossCheckAutoOpenCheckbox", frame, "ChatConfigCheckButtonTemplate")
