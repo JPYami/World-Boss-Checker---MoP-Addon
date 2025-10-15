@@ -1,6 +1,7 @@
 -- Create the main addon frame
 local frame = CreateFrame("Frame", "WorldBossCheckFrame", UIParent, "BackdropTemplate")
-frame:SetSize(260, 220)
+-- slightly larger so delete buttons have breathing room
+frame:SetSize(320, 260)
 frame:SetPoint("CENTER")
 frame:SetMovable(true)
 frame:EnableMouse(true)
@@ -42,7 +43,7 @@ altsHeader:SetText("Characters:")
 -- Container for character rows
 local altsContainer = CreateFrame("Frame", nil, frame)
 altsContainer:SetPoint("TOPLEFT", altsHeader, "BOTTOMLEFT", 0, -5)
-altsContainer:SetSize(240, 140)
+altsContainer:SetSize(280, 180)
 
 -- Row pool
 local rowPool = {}
@@ -52,20 +53,20 @@ local function AcquireRow()
     local row = table.remove(rowPool)
     if row then return row end
     row = CreateFrame("Frame", nil, altsContainer)
-    row:SetSize(240, 16)
+    row:SetSize(280, 18)
 
     row.icon = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     row.icon:SetPoint("LEFT", 0, 0)
-    row.icon:SetWidth(20)
+    row.icon:SetWidth(24)
 
     row.nameText = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     row.nameText:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
     row.nameText:SetJustifyH("LEFT")
-    row.nameText:SetWidth(180)
+    row.nameText:SetWidth(220)
 
     row.deleteBtn = CreateFrame("Button", nil, row, "UIPanelCloseButton")
-    row.deleteBtn:SetSize(16, 16)
-    row.deleteBtn:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+    row.deleteBtn:SetSize(20, 20)
+    row.deleteBtn:SetPoint("RIGHT", row, "RIGHT", -6, 0)
 
     return row
 end
@@ -77,6 +78,61 @@ local function ReleaseRow(row)
     row.deleteBtn:Hide()
     row.deleteBtn:SetScript("OnClick", nil)
     table.insert(rowPool, row)
+end
+
+-- Confirmation dialog
+local confirmFrame = CreateFrame("Frame", "WorldBossCheckConfirmFrame", UIParent, "BackdropTemplate")
+confirmFrame:SetSize(300, 100)
+confirmFrame:SetPoint("CENTER")
+confirmFrame:SetBackdrop({
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true, tileSize = 32, edgeSize = 32,
+    insets = { left = 8, right = 8, top = 8, bottom = 8 }
+})
+confirmFrame:Hide()
+
+confirmFrame.title = confirmFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+confirmFrame.title:SetPoint("TOP", 0, -8)
+confirmFrame.title:SetText("Confirm Deletion")
+
+confirmFrame.text = confirmFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+confirmFrame.text:SetPoint("TOP", confirmFrame.title, "BOTTOM", 0, -8)
+confirmFrame.text:SetWidth(260)
+confirmFrame.text:SetJustifyH("CENTER")
+
+local targetToDelete = nil
+
+local yesBtn = CreateFrame("Button", nil, confirmFrame, "UIPanelButtonTemplate")
+yesBtn:SetSize(100, 24)
+yesBtn:SetPoint("BOTTOMLEFT", confirmFrame, "BOTTOM", -110, 12)
+yesBtn:SetText("Yes")
+yesBtn:SetScript("OnClick", function()
+    if targetToDelete then
+        if DeleteCharacter(targetToDelete) then
+            print("WorldBossCheck: Removed " .. targetToDelete)
+            UpdateAltStatusDisplay()
+        else
+            print("WorldBossCheck: Could not find " .. targetToDelete)
+        end
+    end
+    targetToDelete = nil
+    confirmFrame:Hide()
+end)
+
+local noBtn = CreateFrame("Button", nil, confirmFrame, "UIPanelButtonTemplate")
+noBtn:SetSize(100, 24)
+noBtn:SetPoint("BOTTOMRIGHT", confirmFrame, "BOTTOM", 110, 12)
+noBtn:SetText("No")
+noBtn:SetScript("OnClick", function()
+    targetToDelete = nil
+    confirmFrame:Hide()
+end)
+
+function confirmFrame:ShowForTarget(fullName)
+    targetToDelete = fullName
+    self.text:SetText("Delete saved data for " .. fullName .. "? This action cannot be undone.")
+    self:Show()
 end
 
 -- Reset text
@@ -166,12 +222,7 @@ local function UpdateAltStatusDisplay()
         row.nameText:SetText(data.name .. " - " .. data.realm)
         row.deleteBtn:Show()
         row.deleteBtn:SetScript("OnClick", function()
-            if DeleteCharacter(entry.key) then
-                print("WorldBossCheck: Removed " .. entry.key)
-                UpdateAltStatusDisplay()
-            else
-                print("WorldBossCheck: Could not find " .. entry.key)
-            end
+            confirmFrame:ShowForTarget(entry.key)
         end)
         row:Show()
         table.insert(activeRows, row)
