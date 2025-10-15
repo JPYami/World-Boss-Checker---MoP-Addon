@@ -92,6 +92,8 @@ end
 
 -- forward declare confirmFrame so row handlers reference the local upvalue (set later)
 local confirmFrame
+-- forward declare ShowConfirmToDelete so row handlers can call it
+local ShowConfirmToDelete
 
 -- Reset text
 local resetText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -237,7 +239,7 @@ local function EnsureConfirmFrame()
     end)
 end
 
-local function ShowConfirmToDelete(fullName)
+ShowConfirmToDelete = function(fullName)
     EnsureConfirmFrame()
     targetToDelete = fullName
     confirmFrame.text:SetText("Delete saved data for " .. fullName .. "? This action cannot be undone.")
