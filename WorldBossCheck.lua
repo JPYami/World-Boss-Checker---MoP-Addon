@@ -90,7 +90,8 @@ local function DeleteCharacter(fullName)
     return false
 end
 
--- (confirmFrame is defined later, after UpdateAltStatusDisplay)
+-- forward declare confirmFrame so row handlers reference the local upvalue (set later)
+local confirmFrame
 
 -- Reset text
 local resetText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
