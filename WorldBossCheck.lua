@@ -80,6 +80,16 @@ local function ReleaseRow(row)
     table.insert(rowPool, row)
 end
 
+-- Delete helper (defined early so confirm dialog can call it)
+local function DeleteCharacter(fullName)
+    if not WorldBossCheckDB or not WorldBossCheckDB.characters then return false end
+    if WorldBossCheckDB.characters[fullName] then
+        WorldBossCheckDB.characters[fullName] = nil
+        return true
+    end
+    return false
+end
+
 -- Confirmation dialog
 local confirmFrame = CreateFrame("Frame", "WorldBossCheckConfirmFrame", UIParent, "BackdropTemplate")
 confirmFrame:SetSize(300, 100)
@@ -109,11 +119,15 @@ yesBtn:SetPoint("BOTTOMLEFT", confirmFrame, "BOTTOM", -110, 12)
 yesBtn:SetText("Yes")
 yesBtn:SetScript("OnClick", function()
     if targetToDelete then
-        if DeleteCharacter(targetToDelete) then
-            print("WorldBossCheck: Removed " .. targetToDelete)
-            UpdateAltStatusDisplay()
+        if type(DeleteCharacter) == "function" then
+            if DeleteCharacter(targetToDelete) then
+                print("WorldBossCheck: Removed " .. targetToDelete)
+                UpdateAltStatusDisplay()
+            else
+                print("WorldBossCheck: Could not find " .. targetToDelete)
+            end
         else
-            print("WorldBossCheck: Could not find " .. targetToDelete)
+            print("WorldBossCheck: Delete function not available. Please reload the UI or update the addon files.")
         end
     end
     targetToDelete = nil
@@ -148,7 +162,8 @@ footerText:SetText("Version 0.3")
 
 -- Checkbox for auto-open preference
 local autoOpenCheckbox = CreateFrame("CheckButton", "WorldBossCheckAutoOpenCheckbox", frame, "ChatConfigCheckButtonTemplate")
-autoOpenCheckbox:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 10, 30)
+-- move lower to avoid overlapping the reset timer
+autoOpenCheckbox:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 12, 12)
 autoOpenCheckbox.Text:SetText("Show on login if bosses incomplete")
 autoOpenCheckbox:SetChecked(true)
 autoOpenCheckbox:SetScript("OnClick", function(self)
@@ -174,15 +189,6 @@ local function ResizeFrameToFitCharacters(count)
 end
 
 -- Update alt character list
-local function DeleteCharacter(fullName)
-    if not WorldBossCheckDB or not WorldBossCheckDB.characters then return false end
-    if WorldBossCheckDB.characters[fullName] then
-        WorldBossCheckDB.characters[fullName] = nil
-        return true
-    end
-    return false
-end
-
 local function UpdateAltStatusDisplay()
     -- Clear active rows
     for _, row in ipairs(activeRows) do
